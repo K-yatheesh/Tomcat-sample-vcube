@@ -22,14 +22,14 @@ jobs:
       - name: Build WAR
         run: mvn clean package -DskipTests
 
-      - name: Check target files
+      - name: Verify WAR file
         run: ls -lh target/
 
       - name: Copy WAR to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: target/*.war
           target: /home/ubuntu/
@@ -38,12 +38,13 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/apache-tomcat-9.0.98/bin
-            ./shutdown.sh
-            sleep 10
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/apache-tomcat-9.0.98
+            pkill -f tomcat || true
+            sleep 5
             rm -rf /home/ubuntu/apache-tomcat-9.0.98/webapps/*
             cp /home/ubuntu/target/*.war /home/ubuntu/apache-tomcat-9.0.98/webapps/ROOT.war
+            cd /home/ubuntu/apache-tomcat-9.0.98/bin
             ./startup.sh
