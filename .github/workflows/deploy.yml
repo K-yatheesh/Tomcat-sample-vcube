@@ -42,9 +42,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo chown -R ubuntu:ubuntu /home/ubuntu/apache-tomcat-9.0.98
-            pkill -f tomcat || true
-            sleep 5
+            cd /home/ubuntu/apache-tomcat-9.0.98/bin
+            ./shutdown.sh || true
+            sleep 10
             rm -rf /home/ubuntu/apache-tomcat-9.0.98/webapps/*
             cp /home/ubuntu/target/*.war /home/ubuntu/apache-tomcat-9.0.98/webapps/ROOT.war
-            cd /home/ubuntu/apache-tomcat-9.0.98/bin
             ./startup.sh
