@@ -1,4 +1,4 @@
-name: Deploy Tomcat App to EC2
+name: Build Test SonarQube Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-deploy:
+  build-sonar-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,10 +19,32 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Build WAR
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: maven-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+
+      - name: Validate
+        run: mvn validate
+
+      - name: Compile
+        run: mvn compile
+
+      - name: Test
+        run: mvn test
+
+      - name: SonarQube Scan
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=train-ticket-reservation \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: Package
         run: mvn clean package -DskipTests
 
-      - name: Verify WAR file
+      - name: Verify WAR
         run: ls -lh target/
 
       - name: Copy WAR to EC2
