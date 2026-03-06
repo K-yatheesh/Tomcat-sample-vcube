@@ -70,3 +70,5 @@ jobs:
             rm -rf /home/ubuntu/apache-tomcat-9.0.98/webapps/*
             cp /home/ubuntu/target/*.war /home/ubuntu/apache-tomcat-9.0.98/webapps/ROOT.war
             ./startup.sh
+
+
