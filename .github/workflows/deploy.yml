@@ -89,26 +89,30 @@ jobs:
         run: mvn deploy -DskipTests
 
       # ✅ Deploy from Nexus to Tomcat
-      - name: Deploy in Tomcat (from Nexus)
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo chown -R ubuntu:ubuntu /home/ubuntu/apache-tomcat-9.0.98
+- name: Deploy in Tomcat (from Nexus)
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ubuntu
+    key: ${{ secrets.EC2_SSH_KEY }}
+    script: |
+      sudo chown -R ubuntu:ubuntu /home/ubuntu/apache-tomcat-9.0.98
 
-            cd /home/ubuntu
+      cd /home/ubuntu
 
-            # Download WAR from Nexus (UPDATE PATH if needed)
-            wget http://13.127.61.77:8081/repository/maven-releases/com/example/train-ticket-reservation/1.0-SNAPSHOT/train-ticket-reservation-1.0-SNAPSHOT.war
+      # ✅ Get latest snapshot WAR dynamically
+      FILE=$(curl -s http://13.127.61.77:8081/repository/maven-snapshots/TrainBook/TrainBook/1.0.0-SNAPSHOT/ | grep -o 'TrainBook-.*\.war' | head -n 1)
 
-            cd /home/ubuntu/apache-tomcat-9.0.98/bin
-            ./shutdown.sh || true
-            sleep 10
+      echo "Downloading: $FILE"
 
-            rm -rf /home/ubuntu/apache-tomcat-9.0.98/webapps/*
+      wget http://13.127.61.77:8081/repository/maven-snapshots/TrainBook/TrainBook/1.0.0-SNAPSHOT/$FILE -O app.war
 
-            cp /home/ubuntu/train-ticket-reservation-1.0-SNAPSHOT.war /home/ubuntu/apache-tomcat-9.0.98/webapps/ROOT.war
+      cd /home/ubuntu/apache-tomcat-9.0.98/bin
+      ./shutdown.sh || true
+      sleep 10
 
-            ./startup.sh
+      rm -rf /home/ubuntu/apache-tomcat-9.0.98/webapps/*
+
+      cp /home/ubuntu/app.war /home/ubuntu/apache-tomcat-9.0.98/webapps/ROOT.war
+
+      ./startup.sh
