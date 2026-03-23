@@ -44,7 +44,7 @@ jobs:
           </settings>
           EOF
 
-      # ✅ Build Steps
+      # ✅ Build Step
       - name: Validate
         run: mvn validate
 
